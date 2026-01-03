@@ -61,12 +61,16 @@ export default defineEventHandler(async (event) => {
 
   for (const letter of letters) {
     try {
-      await resend.emails.send({
+      const { error } = await resend.emails.send({
         from: env.RESEND_FROM_EMAIL,
         to: letter.recipient_email,
         subject: letter.subject,
         text: letter.content,
       })
+
+      if (error) {
+        throw new Error(`Resend error: ${error.message ?? error}`)
+      }
 
       await db.prepare(`UPDATE letters SET status = 'sent' WHERE id = ?`).bind(letter.id).run()
       sent += 1
